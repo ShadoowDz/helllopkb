@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  fbx-to-mdl-converter:
+    build: .
+    container_name: fbx-to-mdl-converter
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persistent storage for uploads and outputs
+      - ./data/uploads:/app/backend/uploads
+      - ./data/outputs:/app/backend/outputs
+      # Wine configuration persistence
+      - ./data/wine:/root/.wine
+      # Custom studiomdl.exe (mount if you have it)
+      - ./docker/studiomdl.exe:/usr/local/wine/cstrike/studiomdl.exe:ro
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-fbx-to-mdl-converter-secret-key}
+      - WINEPREFIX=/root/.wine
+      - WINEARCH=win32
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Add nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: fbx-converter-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - fbx-to-mdl-converter
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  wine_data:
+    driver: local
+  app_data:
+    driver: local

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBX to MDL Converter</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-cube"></i>
+                    <h1>FBX to MDL Converter</h1>
+                </div>
+                <p class="subtitle">Convert FBX models to GoldSrc MDL format for Counter-Strike 1.6</p>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-card">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h3>Upload your FBX model</h3>
+                        <p>Drag and drop your .fbx file here, or click to browse</p>
+                        <p class="file-info">Maximum file size: 100MB</p>
+                        <input type="file" id="fileInput" accept=".fbx,.FBX" hidden>
+                        <button class="browse-btn" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open"></i>
+                            Browse Files
+                        </button>
+                    </div>
+
+                    <!-- Options Panel -->
+                    <div class="options-panel" id="optionsPanel" style="display: none;">
+                        <h4><i class="fas fa-cog"></i> Conversion Options</h4>
+                        <div class="option-group">
+                            <label for="scaleInput">Model Scale:</label>
+                            <input type="number" id="scaleInput" value="1.0" min="0.1" max="100" step="0.1">
+                            <span class="help-text">Scale factor for the model (1.0 = original size)</span>
+                        </div>
+                        <div class="option-group">
+                            <label for="bodygroupInput">Bodygroup Name:</label>
+                            <input type="text" id="bodygroupInput" value="default" maxlength="32">
+                            <span class="help-text">Name for the model bodygroup</span>
+                        </div>
+                        <button class="convert-btn" id="convertBtn">
+                            <i class="fas fa-magic"></i>
+                            Start Conversion
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Progress Section -->
+            <section class="progress-section" id="progressSection" style="display: none;">
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <h3><i class="fas fa-spinner fa-spin"></i> Converting...</h3>
+                        <span class="job-id" id="jobIdDisplay"></span>
+                    </div>
+                    
+                    <div class="progress-bar-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span class="progress-text" id="progressText">0%</span>
+                    </div>
+
+                    <div class="current-step" id="currentStep">
+                        Initializing conversion...
+                    </div>
+
+                    <div class="log-container">
+                        <h4><i class="fas fa-terminal"></i> Conversion Log</h4>
+                        <div class="log-output" id="logOutput">
+                            <p class="log-entry">Waiting for conversion to start...</p>
+                        </div>
+                    </div>
+
+                    <button class="cancel-btn" id="cancelBtn">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-card success" id="successResults" style="display: none;">
+                    <div class="results-header">
+                        <h3><i class="fas fa-check-circle"></i> Conversion Successful!</h3>
+                    </div>
+                    <div class="results-content">
+                        <p>Your FBX model has been successfully converted to MDL format.</p>
+                        <div class="download-info">
+                            <h4>Download Package Contains:</h4>
+                            <ul>
+                                <li><i class="fas fa-file"></i> .mdl file (GoldSrc model)</li>
+                                <li><i class="fas fa-file-code"></i> .qc file (model script)</li>
+                                <li><i class="fas fa-file-alt"></i> .smd files (mesh and animations)</li>
+                                <li><i class="fas fa-file-text"></i> compile.log (compilation log)</li>
+                                <li><i class="fas fa-file-archive"></i> original .fbx file</li>
+                            </ul>
+                        </div>
+                        <button class="download-btn" id="downloadBtn">
+                            <i class="fas fa-download"></i>
+                            Download Results
+                        </button>
+                    </div>
+                </div>
+
+                <div class="results-card error" id="errorResults" style="display: none;">
+                    <div class="results-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Conversion Failed</h3>
+                    </div>
+                    <div class="results-content">
+                        <p id="errorMessage">An error occurred during conversion.</p>
+                        <div class="error-log" id="errorLog"></div>
+                        <button class="retry-btn" id="retryBtn">
+                            <i class="fas fa-redo"></i>
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Instructions Section -->
+            <section class="instructions-section">
+                <div class="instructions-card">
+                    <h3><i class="fas fa-info-circle"></i> Instructions</h3>
+                    <div class="instructions-content">
+                        <div class="instruction-group">
+                            <h4>Before You Start:</h4>
+                            <ul>
+                                <li>Ensure your FBX model is properly rigged with bones</li>
+                                <li>Animations should be baked into the FBX file</li>
+                                <li>Use standard bone naming conventions</li>
+                                <li>Keep texture names simple and avoid special characters</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="instruction-group">
+                            <h4>After Conversion:</h4>
+                            <ul>
+                                <li>Extract the downloaded ZIP file</li>
+                                <li>Place the .mdl file in your CS 1.6 models folder</li>
+                                <li>Ensure textures are in the correct directory</li>
+                                <li>Test the model in-game for proper functionality</li>
+                            </ul>
+                        </div>
+
+                        <div class="instruction-group">
+                            <h4>Troubleshooting:</h4>
+                            <ul>
+                                <li>Check the compile.log for detailed error messages</li>
+                                <li>Verify bone count doesn't exceed GoldSrc limits</li>
+                                <li>Ensure model scale is appropriate for CS 1.6</li>
+                                <li>Check that animations have proper keyframes</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 FBX to MDL Converter. Built for GoldSrc Engine Compatibility.</p>
+            <div class="footer-links">
+                <a href="#" onclick="showHealthStatus()"><i class="fas fa-heartbeat"></i> Server Status</a>
+                <a href="#" onclick="showAbout()"><i class="fas fa-question-circle"></i> About</a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <!-- Modal for Status/About -->
+    <div class="modal" id="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
